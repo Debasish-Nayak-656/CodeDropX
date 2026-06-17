@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DropZone — Instant File Sharing</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#08080f;--surface:#111120;--card:#181828;--border:#26263a;--accent:#7b6fff;--accent2:#ff6b8a;--accent3:#3ef0a0;--text:#e2e2f0;--muted:#6868a0;--radius:16px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(123,111,255,.03)1px,transparent 1px),linear-gradient(90deg,rgba(123,111,255,.03)1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+.orb{position:fixed;border-radius:50%;filter:blur(110px);opacity:.12;pointer-events:none;z-index:0;}
+.o1{width:500px;height:500px;background:#7b6fff;top:-150px;left:-150px;}
+.o2{width:400px;height:400px;background:#ff6b8a;bottom:-100px;right:-100px;}
+header{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:15px 36px;background:rgba(8,8,15,.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
+.logo{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;letter-spacing:-.04em;background:linear-gradient(135deg,#7b6fff,#ff6b8a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.logo em{font-style:normal;color:var(--accent3);-webkit-text-fill-color:var(--accent3);}
+.hbadge{background:var(--card);border:1px solid var(--border);border-radius:50px;padding:5px 14px;font-size:.75rem;color:var(--muted);}
+main{max-width:680px;margin:0 auto;padding:48px 20px;position:relative;z-index:1;}
+.tabs{display:flex;gap:6px;background:var(--card);border:1px solid var(--border);border-radius:50px;padding:5px;width:fit-content;margin:0 auto 40px;}
+.tab{padding:8px 28px;border-radius:50px;border:none;background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:500;cursor:pointer;transition:all .2s;}
+.tab.active{background:var(--accent);color:#fff;box-shadow:0 4px 20px rgba(123,111,255,.4);}
+.section{display:none;animation:fu .35s ease;}.section.active{display:block;}
+@keyframes fu{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:36px;}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;text-align:center;}
+.stat-val{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:700;color:#fff;}
+.stat-lbl{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-top:3px;}
+.zone{border:2px dashed var(--border);border-radius:var(--radius);padding:56px 36px;text-align:center;cursor:pointer;transition:all .25s;background:var(--surface);margin-bottom:18px;position:relative;overflow:hidden;}
+.zone::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(123,111,255,.07),transparent 70%);opacity:0;transition:opacity .25s;}
+.zone:hover,.zone.ov{border-color:var(--accent);box-shadow:0 0 60px rgba(123,111,255,.12);}
+.zone:hover::after,.zone.ov::after{opacity:1;}
+.zone.ov{background:rgba(123,111,255,.04);}
+.zi{width:70px;height:70px;border-radius:20px;background:linear-gradient(135deg,#7b6fff,#ff6b8a);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 18px;box-shadow:0 16px 40px rgba(123,111,255,.35);transition:transform .25s;}
+.zone:hover .zi,.zone.ov .zi{transform:translateY(-5px) scale(1.06);}
+.zone h2{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:700;color:#fff;margin-bottom:6px;}
+.zone p{color:var(--muted);margin-bottom:22px;font-size:.92rem;}
+.chips{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;}
+.chip{padding:4px 13px;border-radius:50px;font-size:.74rem;font-weight:500;border:1px solid var(--border);color:var(--muted);background:var(--card);}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:16px;}
+.hidden{display:none!important;}
+.pr{display:flex;justify-content:space-between;font-size:.84rem;color:var(--muted);margin-bottom:10px;}
+.pr-name{color:#fff;font-weight:500;max-width:70%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.bar-o{height:5px;background:var(--border);border-radius:5px;overflow:hidden;}
+.bar-i{height:100%;width:0%;background:linear-gradient(90deg,#7b6fff,#ff6b8a);border-radius:5px;transition:width .15s;}
+.sc-ico{text-align:center;font-size:40px;margin-bottom:12px;}
+.sc-t{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;color:#fff;text-align:center;margin-bottom:4px;}
+.sc-s{font-size:.82rem;color:var(--muted);text-align:center;margin-bottom:22px;}
+.codebox{background:var(--surface);border:2px solid var(--accent);border-radius:14px;padding:18px 24px;display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:18px;}
+.cv{font-family:'Syne',sans-serif;font-size:2.2rem;font-weight:800;letter-spacing:.2em;background:linear-gradient(135deg,#7b6fff,#3ef0a0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.cpbtn{padding:9px 18px;background:var(--accent);border:none;border-radius:10px;color:#fff;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .2s;}
+.cpbtn:hover{opacity:.85;transform:scale(1.04);}
+.meta-row{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin-bottom:18px;}
+.mi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:9px 16px;font-size:.75rem;color:var(--muted);}
+.mi strong{display:block;font-size:.85rem;font-weight:500;color:var(--text);}
+.sbrow{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;}
+.sbtn{padding:8px 18px;border-radius:50px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:.78rem;cursor:pointer;transition:all .2s;}
+.sbtn:hover{border-color:var(--accent);color:var(--accent);}
+.rebtn{width:100%;margin-top:12px;padding:11px;background:transparent;border:1px solid var(--border);border-radius:12px;color:var(--muted);font-size:.84rem;cursor:pointer;transition:all .2s;}
+.rebtn:hover{border-color:var(--accent2);color:var(--accent2);}
+.rl{display:block;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.ci{width:100%;background:var(--surface);border:2px solid var(--border);border-radius:12px;padding:15px 20px;color:#fff;font-family:'Syne',sans-serif;font-size:1.7rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;outline:none;text-align:center;margin-bottom:12px;transition:border-color .2s;}
+.ci:focus{border-color:var(--accent);}
+.fbtn{width:100%;padding:14px;background:linear-gradient(135deg,#7b6fff,#ff6b8a);border:none;border-radius:12px;color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem;cursor:pointer;transition:all .2s;}
+.fbtn:hover{opacity:.9;transform:translateY(-1px);}
+.fbtn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.err{background:rgba(255,107,138,.08);border:1px solid rgba(255,107,138,.3);border-radius:12px;padding:14px 18px;color:#ff6b8a;font-size:.86rem;margin-bottom:14px;}
+.fpt{display:flex;align-items:center;gap:14px;margin-bottom:18px;}
+.fpic{width:56px;height:56px;background:linear-gradient(135deg,#7b6fff,#ff6b8a);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
+.fpn{font-weight:500;color:#fff;font-size:.9rem;word-break:break-all;}
+.fpc{font-size:.76rem;color:var(--muted);margin-top:3px;}
+.fpm{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+.fpmi{flex:1;min-width:80px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;}
+.fpmi strong{display:block;font-size:.9rem;font-weight:500;color:#fff;}
+.fpmi span{font-size:.7rem;color:var(--muted);}
+.dlbtn{width:100%;padding:14px;background:linear-gradient(135deg,#3ef0a0,#7b6fff);border:none;border-radius:12px;color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem;cursor:pointer;transition:all .2s;}
+.dlbtn:hover{opacity:.9;transform:translateY(-2px);box-shadow:0 12px 30px rgba(62,240,160,.25);}
+.mprev{border-radius:12px;overflow:hidden;margin-bottom:16px;background:var(--surface);display:flex;align-items:center;justify-content:center;}
+.mprev img,.mprev video{max-width:100%;max-height:240px;display:block;}
+.hiw{margin-top:56px;}
+.hiw h3{font-family:'Syne',sans-serif;font-weight:700;color:#fff;text-align:center;margin-bottom:20px;}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.step{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 16px;text-align:center;}
+.sn{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#7b6fff,#ff6b8a);display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;margin:0 auto 10px;}
+.step h4{font-size:.86rem;font-weight:600;color:#fff;margin-bottom:5px;}
+.step p{font-size:.74rem;color:var(--muted);line-height:1.5;}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--card);border:1px solid var(--border);padding:12px 18px;border-radius:12px;font-size:.82rem;color:#fff;z-index:9999;opacity:0;transform:translateY(8px);transition:all .3s;pointer-events:none;max-width:260px;}
+.toast.show{opacity:1;transform:translateY(0);}
+footer{text-align:center;padding:28px;color:var(--muted);font-size:.76rem;border-top:1px solid var(--border);margin-top:32px;position:relative;z-index:1;}
+footer span{color:var(--accent);}
+@media(max-width:560px){.steps{grid-template-columns:1fr;}header{padding:13px 16px;}.tab{padding:8px 16px;}}
+</style>
+</head>
+<body>
+<div class="orb o1"></div>
+<div class="orb o2"></div>
+<header>
+  <div class="logo">Drop<em>Zone</em></div>
+  <div class="hbadge">⚡ No login required</div>
+</header>
+<main>
+  <div class="stats">
+    <div class="stat"><div class="stat-val" id="sTot">0</div><div class="stat-lbl">Shared</div></div>
+    <div class="stat"><div class="stat-val" id="sPho">0</div><div class="stat-lbl">Photos</div></div>
+    <div class="stat"><div class="stat-val" id="sVid">0</div><div class="stat-lbl">Videos</div></div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('send',this)">⬆ Send</button>
+    <button class="tab" onclick="switchTab('receive',this)">⬇ Receive</button>
+  </div>
+
+  <!-- SEND -->
+  <div class="section active" id="sec-send">
+    <div class="zone" id="zone" onclick="document.getElementById('fi').click()">
+      <div class="zi">⬆️</div>
+      <h2>Drop any file here</h2>
+      <p>Photo, video, document — anything, instantly</p>
+      <div class="chips">
+        <span class="chip">📄 Documents</span>
+        <span class="chip">🖼 Photos</span>
+        <span class="chip">🎬 Videos</span>
+        <span class="chip">📦 Archives</span>
+      </div>
+    </div>
+    <input type="file" id="fi" style="display:none"/>
+    <div class="card hidden" id="progCard">
+      <div class="pr"><span class="pr-name" id="pN">Uploading...</span><span id="pP">0%</span></div>
+      <div class="bar-o"><div class="bar-i" id="pB"></div></div>
+    </div>
+    <div class="card hidden" id="succCard">
+      <div class="sc-ico">🎉</div>
+      <div class="sc-t">File ready to share!</div>
+      <div class="sc-s">Share this 6-character code — anyone can receive your file</div>
+      <div class="codebox">
+        <span class="cv" id="codeVal">------</span>
+        <button class="cpbtn" onclick="copyCode()">📋 Copy</button>
+      </div>
+      <div class="meta-row">
+        <div class="mi"><strong id="mN">—</strong>File</div>
+        <div class="mi"><strong id="mS">—</strong>Size</div>
+        <div class="mi"><strong>Session</strong>Expires</div>
+      </div>
+      <div class="sbrow">
+        <button class="sbtn" onclick="shareWA()">💬 WhatsApp</button>
+        <button class="sbtn" onclick="shareSMS()">📱 SMS</button>
+        <button class="sbtn" onclick="copyMsg()">📋 Copy message</button>
+      </div>
+      <button class="rebtn" onclick="doReset()">⬆ Upload another file</button>
+    </div>
+    <div class="hiw">
+      <h3>How it works</h3>
+      <div class="steps">
+        <div class="step"><div class="sn">1</div><h4>Upload</h4><p>Select any file — photo, video, PDF, ZIP — anything.</p></div>
+        <div class="step"><div class="sn">2</div><h4>Get Code</h4><p>You instantly get a unique 6-char code for your file.</p></div>
+        <div class="step"><div class="sn">3</div><h4>Share</h4><p>Send the code. They enter it on the Receive tab to download.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECEIVE -->
+  <div class="section" id="sec-receive">
+    <div class="card">
+      <label class="rl">Enter your share code</label>
+      <input class="ci" id="codeIn" maxlength="6" placeholder="ABC123" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')"/>
+      <button class="fbtn" id="fetchBtn" onclick="lookup()">🔍 Find File</button>
+    </div>
+    <div class="err hidden" id="errCard"></div>
+    <div class="card hidden" id="fpCard">
+      <div class="fpt">
+        <div class="fpic" id="fpIco"></div>
+        <div><div class="fpn" id="fpNm"></div><div class="fpc" id="fpCd"></div></div>
+      </div>
+      <div class="mprev hidden" id="mediaPrev"></div>
+      <div class="fpm">
+        <div class="fpmi"><strong id="fpSz">—</strong><span>Size</span></div>
+        <div class="fpmi"><strong id="fpTy">—</strong><span>Type</span></div>
+        <div class="fpmi"><strong id="fpEx">—</strong><span>Expires</span></div>
+      </div>
+      <button class="dlbtn" onclick="doDownload()">⬇ Download File</button>
+    </div>
+  </div>
+</main>
+<footer>Made with ❤️ · <span>DropZone</span> · Both sender and receiver must have this file open in their browser for sharing to work</footer>
+<div class="toast" id="toast"></div>
+<script>
+const store={};
+let stats={tot:0,pho:0,vid:0};
+let lastCode=null,dlUrl=null,dlName=null;
+function switchTab(t,el){document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));el.classList.add('active');document.getElementById('sec-'+t).classList.add('active');}
+const zone=document.getElementById('zone');
+zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('ov');});
+zone.addEventListener('dragleave',()=>zone.classList.remove('ov'));
+zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('ov');if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);});
+document.getElementById('fi').addEventListener('change',e=>{if(e.target.files[0])handleFile(e.target.files[0]);e.target.value='';});
+function handleFile(f){
+  if(f.size>100*1024*1024){toast('❌ File too large. Max 100 MB.');return;}
+  zone.classList.add('hidden');
+  const pc=document.getElementById('progCard');pc.classList.remove('hidden');
+  document.getElementById('pN').textContent=f.name;
+  let p=0;const bar=document.getElementById('pB'),lbl=document.getElementById('pP');
+  const iv=setInterval(()=>{p=Math.min(p+Math.random()*18+5,92);bar.style.width=p+'%';lbl.textContent=Math.round(p)+'%';},120);
+  const reader=new FileReader();
+  reader.onload=()=>{
+    clearInterval(iv);bar.style.width='100%';lbl.textContent='100%';
+    const code=genCode();
+    store[code]={name:f.name,size:f.size,type:f.type||'application/octet-stream',data:reader.result,ts:Date.now()};
+    stats.tot++;if(f.type.startsWith('image/'))stats.pho++;else if(f.type.startsWith('video/'))stats.vid++;
+    updateStats();lastCode=code;
+    setTimeout(()=>{pc.classList.add('hidden');showSuccess(code,f);},400);
+  };
+  reader.readAsDataURL(f);
+}
+function showSuccess(code,f){
+  document.getElementById('codeVal').textContent=code;
+  document.getElementById('mN').textContent=f.name.length>22?f.name.slice(0,20)+'..':f.name;
+  document.getElementById('mS').textContent=fmtSz(f.size);
+  document.getElementById('succCard').classList.remove('hidden');
+}
+function doReset(){document.getElementById('succCard').classList.add('hidden');document.getElementById('progCard').classList.add('hidden');document.getElementById('pB').style.width='0%';document.getElementById('zone').classList.remove('hidden');lastCode=null;}
+function copyCode(){navigator.clipboard.writeText(lastCode||'').catch(()=>{});toast('📋 Code copied: '+lastCode);}
+function copyMsg(){navigator.clipboard.writeText(`Your file is ready!\nCode: ${lastCode}\nOpen DropZone → Receive tab → enter this code to download.`).catch(()=>{});toast('📋 Message copied!');}
+function shareWA(){window.open('https://wa.me/?text='+encodeURIComponent(`Here's a file for you!\nOpen DropZone in your browser → Receive tab → enter code: *${lastCode}*`),'_blank');}
+function shareSMS(){window.open('sms:?body='+encodeURIComponent(`Your file code: ${lastCode} — open DropZone → Receive tab to download.`),'_blank');}
+document.getElementById('codeIn').addEventListener('keydown',e=>{if(e.key==='Enter')lookup();});
+function lookup(){
+  const code=document.getElementById('codeIn').value.trim().toUpperCase();
+  if(code.length<3){toast('⚠️ Enter a valid code');return;}
+  const btn=document.getElementById('fetchBtn');btn.disabled=true;btn.textContent='⏳ Looking up...';
+  document.getElementById('errCard').classList.add('hidden');document.getElementById('fpCard').classList.add('hidden');
+  setTimeout(()=>{
+    btn.disabled=false;btn.textContent='🔍 Find File';
+    const rec=store[code];
+    if(!rec){const e=document.getElementById('errCard');e.textContent='❌ Code not found. Check the code and try again.';e.classList.remove('hidden');return;}
+    showPreview(code,rec);
+  },700);
+}
+function showPreview(code,rec){
+  document.getElementById('fpNm').textContent=rec.name;
+  document.getElementById('fpCd').textContent='Code: '+code;
+  document.getElementById('fpSz').textContent=fmtSz(rec.size);
+  document.getElementById('fpTy').textContent=(rec.type.split('/')[1]||'file').toUpperCase();
+  document.getElementById('fpEx').textContent='This session';
+  document.getElementById('fpIco').textContent=tEmoji(rec.name,rec.type);
+  const mp=document.getElementById('mediaPrev');
+  if(rec.type.startsWith('image/')){mp.innerHTML=`<img src="${rec.data}" style="max-width:100%;max-height:230px;border-radius:10px;"/>`;mp.classList.remove('hidden');}
+  else if(rec.type.startsWith('video/')){mp.innerHTML=`<video src="${rec.data}" controls style="max-width:100%;max-height:230px;border-radius:10px;"></video>`;mp.classList.remove('hidden');}
+  else{mp.classList.add('hidden');}
+  dlUrl=rec.data;dlName=rec.name;document.getElementById('fpCard').classList.remove('hidden');
+}
+function doDownload(){if(!dlUrl)return;const a=document.createElement('a');a.href=dlUrl;a.download=dlName;a.click();toast('⬇️ Download started!');}
+function genCode(){const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let r='';for(let i=0;i<6;i++)r+=c[Math.floor(Math.random()*c.length)];return store[r]?genCode():r;}
+function fmtSz(b){if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(1)+' KB';return(b/1048576).toFixed(1)+' MB';}
+function tEmoji(n,t){if(t?.startsWith('image/'))return '🖼';if(t?.startsWith('video/'))return '🎬';if(t?.startsWith('audio/'))return '🎵';const e=(n.split('.').pop()||'').toLowerCase();return{pdf:'📕',doc:'📄',docx:'📄',xls:'📊',xlsx:'📊',zip:'📦',rar:'📦',txt:'📝',py:'🐍',js:'📜',html:'🌐'}[e]||'📁';}
+function updateStats(){document.getElementById('sTot').textContent=stats.tot;document.getElementById('sPho').textContent=stats.pho;document.getElementById('sVid').textContent=stats.vid;}
+let tt;function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),3200);}
+</script>
+</body>
+</html>
