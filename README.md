@@ -1,6 +1,6 @@
 # 🚀 DropZone — Instant File Sharing App
 
-A full-stack file sharing app. Upload any file → get a **6-character code** → share the code → anyone can download instantly. No login required.
+A full-stack file sharing website. Upload any file → get a **6-character code** → share the code → anyone can download instantly. No login required.
 
 ---
 
